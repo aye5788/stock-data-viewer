@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly.express as px
 
 # Function to fetch data from Alpha Vantage
 def fetch_av_data(function, symbol, api_key):
@@ -13,7 +14,6 @@ def fetch_av_data(function, symbol, api_key):
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
         data = response.json()
-        # Check for error messages in the response
         if "Note" in data or "Error Message" in data:
             st.error(f"API Error: {data.get('Note') or data.get('Error Message')}")
             return None
@@ -22,7 +22,7 @@ def fetch_av_data(function, symbol, api_key):
         st.error(f"HTTP Error: {response.status_code}")
         return None
 
-# Function to display data
+# Function to format and display data
 def display_data(data, title):
     st.subheader(title)
     if isinstance(data, dict):
@@ -34,11 +34,16 @@ def display_data(data, title):
     else:
         st.write(data)
 
+# Function to prettify field names
+def prettify_field_name(field):
+    return " ".join([word.capitalize() for word in field.split("_")])
+
+# Main Streamlit App
 def main():
     st.title("Stock Data Viewer")
-    
+
     # Hard-coded API key (replace with your actual API key)
-    api_key = "CLP9IN76G4S8OUXN"  # Replace with your Alpha Vantage API key
+    api_key = "CLP9IN76G4S8OUXN"  # Replace with your API key
 
     # Sidebar for user input
     ticker = st.sidebar.text_input("Enter Stock Ticker Symbol", value="IBM").upper()
@@ -52,30 +57,68 @@ def main():
             "Cash Flow": "CASH_FLOW",
             "Earnings": "EARNINGS"
         }
-        
+
+        # Tabs for each category
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            ["Company Overview", "Income Statement", "Balance Sheet", "Cash Flow", "Earnings"]
+        )
+
+        # Fetch and display data for each tab
         for title, function in functions.items():
             data = fetch_av_data(function, ticker, api_key)
+
             if data:
-                if function in ["INCOME_STATEMENT", "BALANCE_SHEET", "CASH_FLOW"]:
-                    # Display annual reports
-                    if 'annualReports' in data:
-                        st.markdown(f"### {title} - Annual Reports")
-                        display_data(data['annualReports'], f"{title} - Annual Reports")
-                    # Display quarterly reports
-                    if 'quarterlyReports' in data:
-                        st.markdown(f"### {title} - Quarterly Reports")
-                        display_data(data['quarterlyReports'], f"{title} - Quarterly Reports")
+                if function == "OVERVIEW":
+                    with tab1:
+                        st.header("Company Overview")
+                        display_data(data, "Company Overview")
+
+                elif function == "INCOME_STATEMENT":
+                    with tab2:
+                        st.header("Income Statement")
+                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        if view_type == "Annual" and "annualReports" in data:
+                            display_data(data["annualReports"], "Annual Reports")
+                        elif view_type == "Quarterly" and "quarterlyReports" in data:
+                            display_data(data["quarterlyReports"], "Quarterly Reports")
+
+                elif function == "BALANCE_SHEET":
+                    with tab3:
+                        st.header("Balance Sheet")
+                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        if view_type == "Annual" and "annualReports" in data:
+                            display_data(data["annualReports"], "Annual Reports")
+                        elif view_type == "Quarterly" and "quarterlyReports" in data:
+                            display_data(data["quarterlyReports"], "Quarterly Reports")
+
+                elif function == "CASH_FLOW":
+                    with tab4:
+                        st.header("Cash Flow")
+                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        if view_type == "Annual" and "annualReports" in data:
+                            display_data(data["annualReports"], "Annual Reports")
+                        elif view_type == "Quarterly" and "quarterlyReports" in data:
+                            display_data(data["quarterlyReports"], "Quarterly Reports")
+
                 elif function == "EARNINGS":
-                    # Display annual earnings
-                    if 'annualEarnings' in data:
-                        st.markdown(f"### {title} - Annual Earnings")
-                        display_data(data['annualEarnings'], f"{title} - Annual Earnings")
-                    # Display quarterly earnings
-                    if 'quarterlyEarnings' in data:
-                        st.markdown(f"### {title} - Quarterly Earnings")
-                        display_data(data['quarterlyEarnings'], f"{title} - Quarterly Earnings")
-                else:
-                    display_data(data, title)
+                    with tab5:
+                        st.header("Earnings")
+                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        if view_type == "Annual" and "annualEarnings" in data:
+                            display_data(data["annualEarnings"], "Annual Earnings")
+                        elif view_type == "Quarterly" and "quarterlyEarnings" in data:
+                            display_data(data["quarterlyEarnings"], "Quarterly Earnings")
+
+                # Add Graphs for key financial metrics (if applicable)
+                if function == "INCOME_STATEMENT" and "annualReports" in data:
+                    with tab2:
+                        st.markdown("### Revenue Over Time")
+                        df = pd.DataFrame(data["annualReports"])
+                        if "fiscalDateEnding" in df and "totalRevenue" in df:
+                            df["fiscalDateEnding"] = pd.to_datetime(df["fiscalDateEnding"])
+                            df["totalRevenue"] = pd.to_numeric(df["totalRevenue"], errors="coerce")
+                            fig = px.line(df, x="fiscalDateEnding", y="totalRevenue", title="Revenue Over Time")
+                            st.plotly_chart(fig)
 
 if __name__ == "__main__":
     main()
