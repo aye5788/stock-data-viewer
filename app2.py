@@ -46,6 +46,7 @@ def main():
     api_key = "CLP9IN76G4S8OUXN"  # Replace with your API key
 
     # Sidebar for user input
+    st.sidebar.header("Search Stock")
     ticker = st.sidebar.text_input("Enter Stock Ticker Symbol", value="IBM").upper()
 
     if st.sidebar.button("Get Data"):
@@ -64,7 +65,7 @@ def main():
         )
 
         # Fetch and display data for each tab
-        for title, function in functions.items():
+        for i, (title, function) in enumerate(functions.items()):
             data = fetch_av_data(function, ticker, api_key)
 
             if data:
@@ -76,7 +77,7 @@ def main():
                 elif function == "INCOME_STATEMENT":
                     with tab2:
                         st.header("Income Statement")
-                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        view_type = st.radio("Select View Type (Income Statement):", ("Annual", "Quarterly"), key=f"income_radio_{i}")
                         if view_type == "Annual" and "annualReports" in data:
                             display_data(data["annualReports"], "Annual Reports")
                         elif view_type == "Quarterly" and "quarterlyReports" in data:
@@ -85,7 +86,7 @@ def main():
                 elif function == "BALANCE_SHEET":
                     with tab3:
                         st.header("Balance Sheet")
-                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        view_type = st.radio("Select View Type (Balance Sheet):", ("Annual", "Quarterly"), key=f"balance_radio_{i}")
                         if view_type == "Annual" and "annualReports" in data:
                             display_data(data["annualReports"], "Annual Reports")
                         elif view_type == "Quarterly" and "quarterlyReports" in data:
@@ -94,7 +95,7 @@ def main():
                 elif function == "CASH_FLOW":
                     with tab4:
                         st.header("Cash Flow")
-                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        view_type = st.radio("Select View Type (Cash Flow):", ("Annual", "Quarterly"), key=f"cash_radio_{i}")
                         if view_type == "Annual" and "annualReports" in data:
                             display_data(data["annualReports"], "Annual Reports")
                         elif view_type == "Quarterly" and "quarterlyReports" in data:
@@ -103,7 +104,7 @@ def main():
                 elif function == "EARNINGS":
                     with tab5:
                         st.header("Earnings")
-                        view_type = st.radio("Select View Type:", ("Annual", "Quarterly"), horizontal=True)
+                        view_type = st.radio("Select View Type (Earnings):", ("Annual", "Quarterly"), key=f"earnings_radio_{i}")
                         if view_type == "Annual" and "annualEarnings" in data:
                             display_data(data["annualEarnings"], "Annual Earnings")
                         elif view_type == "Quarterly" and "quarterlyEarnings" in data:
@@ -117,7 +118,7 @@ def main():
                         if "fiscalDateEnding" in df and "totalRevenue" in df:
                             df["fiscalDateEnding"] = pd.to_datetime(df["fiscalDateEnding"])
                             df["totalRevenue"] = pd.to_numeric(df["totalRevenue"], errors="coerce")
-                            fig = px.line(df, x="fiscalDateEnding", y="totalRevenue", title="Revenue Over Time")
+                            fig = px.bar(df, x="fiscalDateEnding", y="totalRevenue", title="Total Revenue Over Time")
                             st.plotly_chart(fig)
 
 if __name__ == "__main__":
