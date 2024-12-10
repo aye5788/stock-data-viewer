@@ -38,7 +38,7 @@ def main():
     st.title("Stock Data Viewer")
     
     # Hard-coded API key (replace with your actual API key)
-    api_key = "YOUR_ALPHA_VANTAGE_API_KEY"  # Replace with your Alpha Vantage API key
+    api_key = "CLP9IN76G4S8OUXN"  # Replace with your Alpha Vantage API key
 
     # Sidebar for user input
     ticker = st.sidebar.text_input("Enter Stock Ticker Symbol", value="IBM").upper()
